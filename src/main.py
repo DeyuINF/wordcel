@@ -1,4 +1,5 @@
 import tkinter as tk
+from ttkbootstrap import Style
 from tkinter import ttk
 import requests
 import pygame
@@ -16,6 +17,10 @@ class DictionaryApp:
         self.api_url = "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
         pygame.mixer.init()
+        
+        # Initialize theme
+        self.style = Style(theme="darkly")
+        self.current_theme = "darkly"
 
         # Define colors for tkmacosx.Button
         self.button_styles = {
@@ -111,6 +116,15 @@ class DictionaryApp:
         # Frame for the search bar
         search_frame = ttk.Frame(self.root, padding=(20, 10))
         search_frame.pack(fill="x", pady=(20, 0))
+        # Theme toggle button with dynamic label
+       
+        self.toggle_theme_button = ttk.Button(
+        header_frame,
+        text="Switch to Light Mode",  # Initial label
+        command=self.toggle_theme,
+        style="primary.TButton"
+        )
+        self.toggle_theme_button.pack(side="right", padx=10)
 
         # Label for the search input
         search_label = ttk.Label(
@@ -178,7 +192,15 @@ class DictionaryApp:
         self.result_text.configure(state="disabled")  # Make the text widget read-only
         self.display_empty_state() # Show empty state initially
         self.scrollbar.config(command=self.result_text.yview)  # Attach scrollbar to text widget
-
+        def toggle_theme(self):
+        if self.current_theme == "darkly":
+            self.style.theme_use("litera")
+            self.current_theme = "litera"
+            self.toggle_theme_button.config(text="Switch to Dark Mode")
+        else:
+            self.style.theme_use("darkly")
+            self.current_theme = "darkly"
+            self.toggle_theme_button.config(text="Switch to Light Mode")
         # Bind Enter key to trigger search
         self.word_entry.bind("<Return>", lambda e: self.search_word())
 
@@ -308,55 +330,44 @@ class DictionaryApp:
         for widget in self.pronunciation_frame.winfo_children():
             widget.destroy()
 
-        # Initalize `buttons_created` to False
-        buttons_created = False
+        us_audio_url = None
+        uk_audio_url = None
 
-        # Check if there are any valid audio URLs
-        audio_found = False
+        # Identify US and UK audio URLs
         for phonetic in phonetics:
             if audio_url := phonetic.get('audio'):
-                audio_found = True
-                # Determine accent if specified
-                accent = 'UK' if 'uk' in audio_url else 'US' if 'us' in audio_url else 'AU' if 'au' in audio_url else 'Unknown'
+                if 'us' in audio_url.lower():
+                    us_audio_url = audio_url
+                elif 'uk' in audio_url.lower():
+                    uk_audio_url = audio_url
 
-                # Create tkmacosx.Button with custom styling
-                button = Button(
-                    self.pronunciation_frame,
-                    text=f"{accent} Pronunciation",
-                    bg=self.COLORS['accent'],        # Background color
-                    fg=self.COLORS['fg'],            # Foreground (text) color
-                    activebackground=self.COLORS['hover'],  # Hover background color
-                    activeforeground=self.COLORS['fg'],     # Hover text color
-                    borderless=1,                    # Removes the button border
-                    font=("Helvetica", 12, "bold"),  # Font styling
-                    command=lambda url=audio_url: self.play_pronunciation(url),
-                )
-                button.pack(side="top", pady=5)
+        # Create buttons for US and UK pronunciations only if they exist
+        if us_audio_url:
+            Button(
+                self.pronunciation_frame,
+                text="US Pronunciation",
+                bg=self.COLORS['accent'],
+                fg=self.COLORS['fg'],
+                command=lambda: self.play_pronunciation(us_audio_url),
+                font=("Helvetica", 12, "bold")
+            ).pack(side="top", pady=5)
 
-                self._apply_hover_effect(button, self.COLORS['accent'])
+        if uk_audio_url:
+            Button(
+                self.pronunciation_frame,
+                text="UK Pronunciation",
+                bg=self.COLORS['accent'],
+                fg=self.COLORS['fg'],
+                command=lambda: self.play_pronunciation(uk_audio_url),
+                font=("Helvetica", 12, "bold")
+            ).pack(side="top", pady=5)
 
-                # Bind <Return> key to the same command as the button click
-                button.bind(
-                    "<Return>",
-                    lambda e, url=audio_url: self.play_pronunciation(url),
-                )
-
-        # Show or hide the "Play Audio" heading and buttons
-        if audio_found:
-            self.audio_section_frame.pack(fill="x", pady=0)
-            self.audio_title.pack(anchor="center", pady=(2, 5))  # Ensure the title is visible
-            self.pronunciation_frame.pack(anchor="center", pady=0)
-            buttons_created = True
+        # Show the frame only if buttons were added
+        if us_audio_url or uk_audio_url:
+            self.audio_section_frame.pack(fill="x")
         else:
             self.audio_section_frame.pack_forget()
-            self.audio_title.pack_forget()  # Hide the title when no audio is found
 
-        if not buttons_created:
-            # No audio available - show a placeholder message
-            no_audio_label = ttk.Label(
-                self.pronunciation_frame, text="No pronunciation available.",
-            )
-            no_audio_label.pack(anchor="center")
             
     def play_pronunciation(self, audio_url):
         """Download and play the pronunciation audio."""
