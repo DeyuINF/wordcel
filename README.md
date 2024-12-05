@@ -40,6 +40,7 @@ This project demonstrates practical applications of Python's `tkinter` library f
 - **Tab Navigation:** Use the `Tab` key to navigate across buttons and inputs.
 - **Enter Key:** Press `Enter` on focused audio buttons to play pronunciations.
 - **Alt + S:** Focus on the search input field for faster word lookup.
+- **Use the "Switch to Light/Dark Mode** button to change between light and dark themes, depending on your preference.
 
 ### Steps to Use
 1. Type a word into the search bar.
@@ -49,6 +50,7 @@ This project demonstrates practical applications of Python's `tkinter` library f
 ---
 
 ## Recent Updates
+- Audio Icons: Added icons to pronunciation buttons for better user recognition and improved user experience.
 
 ### Accessibility Improvements
 - Added keyboard navigation for all buttons.
